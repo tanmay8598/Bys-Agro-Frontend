@@ -213,13 +213,13 @@ const ShopByCategory = () => {
           <div className="absolute left-0 top-0 bottom-0 w-12 bg-linear-to-r from-[#F7F2EA] to-transparent pointer-events-none"></div>
         </div>
 
-        <div className="md:hidden flex justify-center mt-6">
+        {/* <div className="md:hidden flex justify-center mt-6">
           <div className="flex items-center gap-2 text-xs text-gray-400 animate-pulse">
             <ChevronLeft size={14} />
             <span>Swipe to explore</span>
             <ChevronRight size={14} />
           </div>
-        </div>
+        </div> */}
       </div>
 
       <style jsx>{`
