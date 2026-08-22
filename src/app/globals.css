@@ -1,8 +1,28 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-primary: #B85C38;
+  --color-green: #3D5A45;
+
+  --color-background: #E9E7E3;
+  --color-surface: #F7F2EA;
+  --color-card: #FCFAF6;
+  --color-hero: #EDE2D2;
+  --color-footer: #3A2E24;
+
+  --color-text-heading: #3A2E24;
+  --color-text-body: #655849;
+  --color-text-muted: #7D6F60;
+  --color-logo: #4A3225;
+
+  --color-border: #DAD0C4;
+  --color-border-input: #C9BBA9;
+
+  --color-fssai-bg: #DCE5B7;
+  --color-fssai-text: #405B2A;
+
+  --color-natural-bg: #CFE8C8;
+  --color-natural-text: #315A3A;
 }
 
 @theme inline {
@@ -23,4 +43,199 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ============================================
+   CUSTOM ANIMATIONS
+   ============================================ */
+
+@keyframes shopDrawer {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hero Banner Animations */
+@keyframes heroFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes heroSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile Navbar Animations */
+@keyframes mobileMenu {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mobileCategories {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.animate-shopDrawer {
+  animation: shopDrawer 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+.animate-slideDown {
+  animation: slideDown 0.3s ease-out forwards;
+}
+
+/* Hero Banner Classes */
+.animate-heroFadeIn {
+  animation: heroFadeIn 0.8s ease-out forwards;
+}
+
+.animate-heroSlideUp {
+  animation: heroSlideUp 0.8s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-mobileMenu {
+  animation: mobileMenu 0.22s ease-out forwards;
+}
+
+.animate-mobileCategories {
+  animation: mobileCategories 0.18s ease-out forwards;
+}
+
+/* ============================================
+   HIDE SCROLLBAR (but keep functionality)
+   ============================================ */
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* For the shop drawer specifically */
+.shop-drawer-scroll::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+.shop-drawer-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Smooth scroll for mobile */
+.mobile-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.mobile-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mobile-scroll::-webkit-scrollbar-thumb {
+  background: #c1552c;
+  border-radius: 10px;
+}
+
+/* ============================================
+   DELAY UTILITIES
+   ============================================ */
+
+.animation-delay-200 {
+  animation-delay: 0.2s;
+}
+
+.animation-delay-400 {
+  animation-delay: 0.4s;
+}
+
+.animation-delay-600 {
+  animation-delay: 0.6s;
+}
+
+
+@keyframes dropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-dropdownIn {
+  animation: dropdownIn 0.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }

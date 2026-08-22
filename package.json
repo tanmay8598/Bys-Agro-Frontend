@@ -9,11 +9,15 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@react-oauth/google": "^0.13.5",
     "apisauce": "^3.2.2",
     "framer-motion": "^13.0.0",
+    "html-to-react": "^1.7.0",
+    "i": "^0.3.7",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^1.30.0",
     "next": "16.3.0",
+    "npm": "^11.19.0",
     "postcss": "^8.5.26",
     "react": "19.2.8",
     "react-dom": "19.2.8",

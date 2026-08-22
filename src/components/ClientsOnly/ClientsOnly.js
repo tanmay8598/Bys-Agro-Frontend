@@ -6,10 +6,17 @@ import ScrollToTop from "./../ScrollToTop/ScrollToTop";
 import Navbar from "./../Navbar/Navbar";
 import AuthContext from "./../../auth/context";
 import CartSidebar from "./../../app/cart/cartSidebar";
+import LoginSidebar from './../Auth/LoginSidebar';
+import VerificationSidebar from './../Auth/VerificationSidebar';
 
 const ClientOnly = ({ children }) => {
   const [user, setUser] = useState();
   const [isCartOpen, setIsCartOpen] = useState(false);
+    const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isVerificationOpen, setIsVerificationOpen] = useState(false);
+  const [mobile, setMobile] = useState("");
+  const [email, setEmail] = useState("");
+  const [isEmailMode, setIsEmailMode] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -28,14 +35,34 @@ const ClientOnly = ({ children }) => {
     setIsCartOpen(true);
   };
 
-  // Global function to open cart from anywhere
+   // Global function to open cart and login from anywhere
   useEffect(() => {
+    // Cart functions
     window.openCartSidebar = () => {
       setIsCartOpen(true);
     };
 
     window.closeCartSidebar = () => {
       setIsCartOpen(false);
+    };
+
+    // Login functions
+    window.openLoginSidebar = () => {
+      console.log("Opening login sidebar");
+      setIsLoginOpen(true);
+    };
+
+    window.closeLoginSidebar = () => {
+      setIsLoginOpen(false);
+    };
+
+    // Verification functions
+    window.openVerificationSidebar = () => {
+      setIsVerificationOpen(true);
+    };
+
+    window.closeVerificationSidebar = () => {
+      setIsVerificationOpen(false);
     };
 
     // Listen for cart update events
@@ -47,9 +74,14 @@ const ClientOnly = ({ children }) => {
     return () => {
       delete window.openCartSidebar;
       delete window.closeCartSidebar;
+      delete window.openLoginSidebar;
+      delete window.closeLoginSidebar;
+      delete window.openVerificationSidebar;
+      delete window.closeVerificationSidebar;
       window.removeEventListener("cartUpdated", handleCartUpdate);
     };
   }, []);
+
 
   // Close cart on navigation (optional - improves UX)
   useEffect(() => {
@@ -69,12 +101,36 @@ const ClientOnly = ({ children }) => {
         }}
       >
         <Navbar onCartClick={handleCartOpen} />
-        <main className="relative">
+        <main className="relative mt-26">
           {children}
           <ScrollToTop />
         </main>
         <Footer />
         <CartSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+           {/* Login Sidebar */}
+        <LoginSidebar
+          isOpen={isLoginOpen}
+          onClose={() => setIsLoginOpen(false)}
+          mobile={mobile}
+          setMobile={setMobile}
+          email={email}
+          setEmail={setEmail}
+          isEmailMode={isEmailMode}
+          setIsEmailMode={setIsEmailMode}
+          setIsVerificationModalOpen={setIsVerificationOpen}
+        />
+
+        {/* Verification Sidebar */}
+        <VerificationSidebar
+          isOpen={isVerificationOpen}
+          onClose={() => setIsVerificationOpen(false)}
+          email={email}
+          setEmail={setEmail}
+          mobile={mobile}
+          setMobile={setMobile}
+          isEmailMode={isEmailMode}
+          setIsEmailMode={setIsEmailMode}
+        />
       </AuthContext.Provider>
     </>
   );
