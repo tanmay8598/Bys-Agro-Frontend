@@ -21,7 +21,7 @@ const features = [
 const FeatureStrip = () => {
   return (
     <section className="bg-[#254326] text-white overflow-x-auto no-scrollbar">
-      <div className="max-w-7xl mx-auto min-w-max px-6 md:px-8 py-4">
+      <div className="max-w-7xl mx-auto min-w-max  md:px-8 py-4">
         <div className="flex items-center justify-center">
 
           {features.map((feature, index) => {

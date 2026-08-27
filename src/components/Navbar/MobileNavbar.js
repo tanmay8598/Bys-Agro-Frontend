@@ -160,38 +160,6 @@ export default function MobileNavbar({
           {/* ==============================
               ACCOUNT
           ============================== */}
-{/* 
-          <button
-           onClick={handleLoginClick}
-            className="w-full flex items-center gap-3 p-4 rounded-2xl bg-[#faf4ea] text-left hover:bg-[#f3eadf] transition-colors"
-          >
-
-            <div className="w-10 h-10 shrink-0 rounded-full bg-[#c1552c] flex items-center justify-center text-white">
-              <User size={19} />
-            </div>
-
-            <div className="flex-1">
-
-              <p className="text-sm font-semibold text-[#4b2e1e]">
-                Guest User
-              </p>
-
-              <p className="text-xs text-[#8a8179] mt-0.5">
-                Sign in for a better experience
-              </p>
-
-            </div>
-
-            <ArrowRight
-              size={16}
-              className="text-[#9b9188]"
-            />
-
-          </button> */}
-
-          {/* ==============================
-    ACCOUNT - Shows login or user info
-============================== */}
 
 {!user ? (
   // Guest User - Show Login Button

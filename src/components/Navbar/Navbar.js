@@ -18,6 +18,7 @@ import MobileNavbar from "./MobileNavbar";
 import ShopDrawer from "./ShopDrawer";
 import Banner from './BannerMessage';
 import useAuth from './../../auth/useAuth';
+import { useCartCount } from './../../hooks/useCartCount';
 
 const navItems = [
   { name: "Home", href: "/" },
@@ -32,30 +33,12 @@ export default function Navbar({ onCartClick }) {
   const pathname = usePathname()
   const {user, logOut} = useAuth()
 
-  const { getTotalItems } = useCartStore();
+  const { count: cartCount, loading } = useCartCount();
+
 const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
 const dropdownRef = useRef(null);
-  const [cartCount, setCartCount] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isShopDrawerOpen, setIsShopDrawerOpen] = useState(false);
-
-  /* --------------------------------
-     Cart Count
-  -------------------------------- */
-
-  useEffect(() => {
-    const updateCount = () => {
-      setCartCount(getTotalItems());
-    };
-
-    updateCount();
-
-    window.addEventListener("cartUpdated", updateCount);
-
-    return () => {
-      window.removeEventListener("cartUpdated", updateCount);
-    };
-  }, [getTotalItems]);
 
   /* --------------------------------
      Close Shop Drawer with ESC
@@ -146,7 +129,7 @@ const handleLogout = () => {
             NAVBAR CONTENT
         ===================================== */}
 
-        <div className="max-w-7xl mx-auto h-20 px-8 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto h-20 px-4 md:px-8 flex items-center justify-between">
           {/* ===================================
               LOGO
           =================================== */}
@@ -164,7 +147,7 @@ const handleLogout = () => {
               DESKTOP NAVIGATION
           =================================== */}
 
-          <div className="hidden lg:flex items-center gap-8 h-full">
+          <div className="hidden lg:flex items-center gap-10 h-full">
             {navItems.map((item) => {
               /* ================================
                   SHOP
@@ -218,7 +201,7 @@ const handleLogout = () => {
               RIGHT SIDE
           =================================== */}
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 md:gap-6">
             {/* =================================
                 SEARCH
             ================================= */}
@@ -315,35 +298,6 @@ const handleLogout = () => {
         </div>
       </div>
 
-      {/* <div className="py-2">
-        <button
-          onClick={() => {
-            setIsUserDropdownOpen(false);
-            router.push("/orders");
-          }}
-          className="w-full flex items-center gap-3 px-5 py-3 text-sm text-[#2b1b12] hover:bg-[#faf4ea] transition-colors group"
-        >
-          <div className="w-8 h-8 rounded-lg bg-[#faf4ea] group-hover:bg-[#c1552c]/10 flex items-center justify-center transition-colors">
-            <ShoppingCart size={16} className="text-[#5a5a5a] group-hover:text-[#c1552c]" />
-          </div>
-          <span className="flex-1 text-left">My Orders</span>
-          <span className="text-xs text-[#8a8179]">→</span>
-        </button>
-
-        <button
-          onClick={() => {
-            setIsUserDropdownOpen(false);
-            router.push("/profile");
-          }}
-          className="w-full flex items-center gap-3 px-5 py-3 text-sm text-[#2b1b12] hover:bg-[#faf4ea] transition-colors group"
-        >
-          <div className="w-8 h-8 rounded-lg bg-[#faf4ea] group-hover:bg-[#c1552c]/10 flex items-center justify-center transition-colors">
-            <User size={16} className="text-[#5a5a5a] group-hover:text-[#c1552c]" />
-          </div>
-          <span className="flex-1 text-left">My Profile</span>
-          <span className="text-xs text-[#8a8179]">→</span>
-        </button>
-      </div> */}
 
       <div className="py-2">
   <button
@@ -401,7 +355,7 @@ const handleLogout = () => {
 
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden cursor-pointer p-1 hover:bg-[#e6ded2] rounded-lg transition-colors"
+              className="lg:hidden cursor-pointer  hover:bg-[#e6ded2] rounded-lg transition-colors"
             >
               <Menu size={24} className="text-[#4b2e1e]" />
             </button>

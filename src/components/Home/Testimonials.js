@@ -378,12 +378,12 @@ function Testimonials() {
         <div className="flex items-end justify-between gap-6 mb-8 md:mb-10">
 
           <div>
-              <p className="text-[#c1552c] text-xs font-semibold uppercase tracking-[0.2em] mb-4">
+              <p className="text-[#c1552c] text-xs font-semibold uppercase tracking-[0.2em] mb-2 md:mb-4">
 
               Customer stories
             </p>
 
-                    <h2 className="font-serif text-3xl font-semibold text-[#1D241D]">
+                    <h2 className="font-serif text-2xl md:text-3xl font-semibold text-[#1D241D]">
 
               Loved by our customers
             </h2>

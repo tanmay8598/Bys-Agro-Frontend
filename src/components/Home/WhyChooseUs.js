@@ -31,12 +31,12 @@ export default function WhyChooseUs() {
       <div className="max-w-7xl mx-auto px-5 sm:px-8">
 
         {/* Header */}
-        <div className="max-w-2xl mb-12 md:mb-5">
-          <p className="text-[#c1552c] text-xs font-semibold uppercase tracking-[0.2em] mb-4">
+        <div className="max-w-2xl mb-5">
+          <p className="text-[#c1552c] text-xs font-semibold uppercase tracking-[0.2em] mb-2 md:mb-4">
             Why Anaaj
           </p>
 
-                  <h2 className="font-serif text-3xl font-semibold text-[#1D241D]">
+                  <h2 className="font-serif text-2xl md:text-3xl font-semibold text-[#1D241D]">
 
             Good food starts
             <br />
@@ -47,7 +47,7 @@ export default function WhyChooseUs() {
         </div>
 
         {/* Main Image */}
-        <div className="relative h-80 md:h-120 rounded-[28px] overflow-hidden mb-10">
+        <div className="relative h-80 md:h-120 rounded-[28px] overflow-hidden mb-5">
           <Image
             src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000&auto=format&fit=crop"
             alt="Fresh produce sourced from Indian farms"

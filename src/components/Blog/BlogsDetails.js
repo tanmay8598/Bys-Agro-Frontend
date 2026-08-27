@@ -43,7 +43,10 @@ const BlogsDetails = () => {
   if (isLoading) return <Loader />;
 
   return (
-    <div className="bg-[#FAF6ED] max-w-7xl mx-auto px-5 md:px-10 py-10">
+    <div className="bg-[#FAF6ED] min-h-screen ">
+
+  
+    <div className=" max-w-7xl mx-auto px-5 md:px-10 py-10">
 
     
       <div className="text-center mb-12">
@@ -123,6 +126,7 @@ const BlogsDetails = () => {
         />
       </div>
     </div>
+      </div>
   );
 };
 

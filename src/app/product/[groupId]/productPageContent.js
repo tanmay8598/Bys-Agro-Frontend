@@ -63,7 +63,7 @@ const ProductPageContent = ({ products = [], groupId, initialVisualId }) => {
   }
 
   return (
-      <div className="min-h-screen bg-[#faf4ea] py-8">
+      <div className="min-h-screen w-full bg-[#faf4ea]">
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-center lg:gap-16 lg:max-w-6xl lg:mx-auto">
         <div className="lg:w-1/2 lg:max-w-lg lg:self-stretch">
           <div className="sticky top-32">
@@ -87,7 +87,7 @@ const ProductPageContent = ({ products = [], groupId, initialVisualId }) => {
 
 
          {youMayAlsoLikeProducts.length > 0 && (
-        <div className="mt-8">
+        <div className=" md:mt-8">
           <YouMightAlsoLike youMayAlsoLikeProducts={youMayAlsoLikeProducts} />
         </div>
       )}

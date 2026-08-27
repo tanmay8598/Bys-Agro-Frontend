@@ -8,6 +8,8 @@ import { useCartStore } from "./../../stores/cartStore";
 import toast from "react-hot-toast";
 import { Parser } from "html-to-react";
 import AccordionItem from './../Accordian/AccordianProductDetails';
+import apiClient from "./../../api/client";
+import useAuth from "./../../auth/useAuth";
 
 const ProductDetails = ({
   products,
@@ -18,7 +20,8 @@ const ProductDetails = ({
   scrollToReviews,
 }) => {
   const router = useRouter();
-  const { addToCart, getTotalItems, getProductQuantity } = useCartStore();
+const { addToCart, getTotalQuantity } = useCartStore();
+const { user } = useAuth();
   const [qty, setQty] = useState(1);
   const [selectedVariant, setSelectedVariant] = useState(0);
 
@@ -133,34 +136,126 @@ const ProductDetails = ({
     if (qty > 1) setQty(qty - 1);
   };
 
-  const handleAddToCart = (e) => {
-    e?.stopPropagation();
-
-    const totalItems = getTotalItems();
-    if (totalItems >= 4) {
-      toast.error("Maximum 4 items allowed per order");
-      return;
+  // Get current total quantity in cart
+const getCurrentCartTotal = async () => {
+  if (user) {
+    try {
+      const response = await apiClient.get("/cart/get", {
+        userId: user?.id,
+      });
+      let totalQty = 0;
+      if (response.data && Array.isArray(response.data?.cart)) {
+        totalQty = response.data.cart.reduce(
+          (sum, item) => sum + (item?.quantity || 0),
+          0,
+        );
+      }
+      return totalQty;
+    } catch (error) {
+      console.error("Error fetching cart:", error);
+      return 0;
     }
+  } else {
+    return getTotalQuantity();
+  }
+};
 
-    const productQuantity = getProductQuantity(currentProduct?._id || currentProduct?.groupId);
-    if (productQuantity >= 4) {
-      toast.error("Maximum 4 items of this product allowed");
-      return;
+const handleAddToCart = async (e) => {
+  e?.stopPropagation();
+
+  const qtyToAdd = qty;
+  const currentTotalQuantity = await getCurrentCartTotal();
+  const newTotalQuantity = currentTotalQuantity + qtyToAdd;
+
+  // GLOBAL CART LIMIT CHECK (max 4 total items)
+  if (newTotalQuantity > 4) {
+    toast.error(
+      `Maximum 4 items allowed per order. You already have ${currentTotalQuantity} item(s) in cart.`,
+    );
+    return;
+  }
+
+  // Check if product already exists in cart and its quantity
+  let existingProductQuantity = 0;
+  if (user) {
+    try {
+      const response = await apiClient.get("/cart/get", {
+        userId: user?.id,
+      });
+      if (response.data && Array.isArray(response.data?.cart)) {
+        const existingItem = response.data.cart.find(
+          (item) => item.product._id === currentProduct._id || item.product === currentProduct._id
+        );
+        existingProductQuantity = existingItem?.quantity || 0;
+      }
+    } catch (error) {
+      console.error("Error checking product in cart:", error);
     }
+  } else {
+    const cart = useCartStore.getState().cart;
+    const existingItem = cart.find((item) => item.product._id === currentProduct._id);
+    existingProductQuantity = existingItem?.quantity || 0;
+  }
 
-    addToCart(currentProduct, qty);
-    toast.success(`${currentProduct?.name} added to cart!`);
-    window.dispatchEvent(new CustomEvent("cartUpdated"));
-  };
+  // Check product limit (max 4 per product) - including the new qty
+  if (existingProductQuantity + qtyToAdd > 4) {
+    toast.error("Maximum 4 items of this product allowed");
+    return;
+  }
 
-  const handleBuyNow = () => {
-    if (currentProduct?.countInStock?.quantity <= 0) {
-      toast.error("Product is out of stock");
-      return;
+  try {
+    if (user) {
+      // User is logged in - add to backend
+      const response = await apiClient.post("/cart/add", {
+        userId: user?.id,
+        item: {
+          product: currentProduct._id,
+          qty: qtyToAdd,
+        },
+        type: "increment",
+      });
+
+      if (response.ok) {
+        toast.success(response.data.message || `${currentProduct?.name} added to cart!`);
+        window.dispatchEvent(new CustomEvent("cartUpdated"));
+        if (window.openCartSidebar) {
+          window.openCartSidebar();
+        }
+      } else {
+        toast.error("Failed to add item to cart");
+      }
+    } else {
+      // User is not logged in - add to Zustand
+      addToCart(currentProduct, qtyToAdd);
+      toast.success(`${currentProduct?.name} added to cart!`);
+      window.dispatchEvent(new CustomEvent("cartUpdated"));
+      if (window.openCartSidebar) {
+        window.openCartSidebar();
+      }
     }
-    addToCart(currentProduct, qty);
-    router.push("/checkout");
-  };
+  } catch (error) {
+    console.error("Error adding to cart:", error);
+    toast.error("Failed to add item to cart");
+  }
+};
+
+const handleBuyNow = async () => {
+  if (currentProduct?.countInStock?.quantity <= 0) {
+    toast.error("Product is out of stock");
+    return;
+  }
+
+  // Check global cart limit first
+  const currentTotal = await getCurrentCartTotal();
+  if (currentTotal + qty > 4) {
+    toast.error(`Maximum 4 items allowed per order. You already have ${currentTotal} item(s) in cart.`);
+    return;
+  }
+
+  // For buy now, we need to add to cart first then navigate to checkout
+  await handleAddToCart();
+  router.push("/checkout");
+};
 
   const renderStars = () => {
     const stars = [];
@@ -189,7 +284,7 @@ const ProductDetails = ({
   }
 
   return (
-    <div className="w-full flex font-figtree mt-5 justify-center">
+    <div className="w-full flex font-serif mt-5 justify-center">
       <div className="w-full max-w-2xl lg:max-w-lg px-4 text-left">
         {/* Badges */}
         <div className="flex flex-wrap gap-2">

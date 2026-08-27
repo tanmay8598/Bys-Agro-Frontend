@@ -1,4 +1,4 @@
-// // stores/cartStore.js
+
 // import { create } from "zustand";
 // import { persist } from "zustand/middleware";
 
@@ -20,7 +20,7 @@
 //                   quantity: item.quantity + quantity,
 //                   product: product,
 //                 }
-//               : item,
+//               : item
 //           );
 //           set({ cart: updated });
 //         } else {
@@ -48,7 +48,7 @@
 //       increaseQty: (id) =>
 //         set({
 //           cart: get().cart.map((item) =>
-//             item._id === id ? { ...item, quantity: item.quantity + 1 } : item,
+//             item._id === id ? { ...item, quantity: item.quantity + 1 } : item
 //           ),
 //         }),
 
@@ -56,7 +56,7 @@
 //         set({
 //           cart: get()
 //             .cart.map((item) =>
-//               item._id === id ? { ...item, quantity: item.quantity - 1 } : item,
+//               item._id === id ? { ...item, quantity: item.quantity - 1 } : item
 //             )
 //             .filter((item) => item.quantity > 0),
 //         }),
@@ -64,13 +64,12 @@
 //       cartTotal: () => {
 //         return get().cart.reduce(
 //           (total, item) => total + (item.product?.price || 0) * item.quantity,
-//           0,
+//           0
 //         );
 //       },
 
 //       // Sync local cart to backend when user logs in
 //       syncCartToBackend: async (userId, apiClient) => {
-//         // console.log("from zustand", userId, apiClient);
 //         const localCart = get().cart.filter((item) => item.isLocal);
 //         if (localCart.length === 0) return;
 
@@ -116,7 +115,7 @@
 
 //         // Filter out local items that already exist in backend
 //         const uniqueLocalItems = localCart.filter(
-//           (localItem) => !backendMap.has(localItem.product._id),
+//           (localItem) => !backendMap.has(localItem.product._id)
 //         );
 
 //         // Combine backend items with unique local items
@@ -126,12 +125,10 @@
 //       },
 //     }),
 //     {
-//       name: "bysAgro-cart",
-//     },
-//   ),
+//       name: "bysAgro-cart", // localStorage key
+//     }
+//   )
 // );
-
-
 
 // stores/cartStore.js
 import { create } from "zustand";
@@ -142,99 +139,173 @@ export const useCartStore = create(
     (set, get) => ({
       cart: [],
 
-      // Add product to cart
+      // Add product with proper structure matching your backend
       addToCart: (product, quantity = 1) => {
         const cart = get().cart;
-        const exists = cart.find((item) => item.productId === product.id || item.productId === product.groupId);
+        const exists = cart.find((item) => item.product._id === product._id);
 
         if (exists) {
-          // Update quantity if product already exists
           const updated = cart.map((item) =>
-            item.productId === (product.id || product.groupId)
+            item.product._id === product._id
               ? {
                   ...item,
                   quantity: item.quantity + quantity,
+                  product: product,
                 }
-              : item,
+              : item
           );
           set({ cart: updated });
         } else {
-          // Add new product
           set({
             cart: [
               ...cart,
               {
-                id: `cart_${Date.now()}`,
-                productId: product.id || product.groupId,
+                _id: `local_${Date.now()}`,
                 product: product,
                 quantity: quantity,
-                price: product.price,
-                name: product.name,
-                weight: product.weight,
-                image: product.images?.[0] || product.image,
+                isLocal: true,
               },
             ],
           });
         }
       },
 
-      // Remove product from cart
       removeFromCart: (id) =>
         set({
-          cart: get().cart.filter((item) => item.id !== id),
+          cart: get().cart.filter((item) => item._id !== id),
         }),
 
-      // Clear entire cart
       clearCart: () => set({ cart: [] }),
 
-      // Increase quantity
       increaseQty: (id) =>
         set({
           cart: get().cart.map((item) =>
-            item.id === id ? { ...item, quantity: item.quantity + 1 } : item,
+            item._id === id ? { ...item, quantity: item.quantity + 1 } : item
           ),
         }),
 
-      // Decrease quantity
       decreaseQty: (id) =>
         set({
           cart: get()
             .cart.map((item) =>
-              item.id === id ? { ...item, quantity: item.quantity - 1 } : item,
+              item._id === id ? { ...item, quantity: item.quantity - 1 } : item
             )
             .filter((item) => item.quantity > 0),
         }),
 
-      // Get total items in cart
-      getTotalItems: () => {
+      cartTotal: () => {
+        return get().cart.reduce(
+          (total, item) => total + (item.product?.price || 0) * item.quantity,
+          0
+        );
+      },
+
+      // Sync local cart to backend when user logs in
+      syncCartToBackend: async (userId, apiClient) => {
+        const localCart = get().cart.filter((item) => item.isLocal);
+        if (localCart.length === 0) return;
+
+        try {
+          // First, get current backend cart to check what exists
+          const backendResponse = await apiClient.get("/cart/get", {
+            userId: userId,
+          });
+
+          const existingItems = backendResponse.data?.cart || [];
+
+          // Create a map of existing backend items
+          const existingMap = new Map();
+          existingItems.forEach((item) => {
+            existingMap.set(item.product._id, item);
+          });
+
+          // For each local item, check if it exists in backend
+          for (const localItem of localCart) {
+            const existingItem = existingMap.get(localItem.product._id);
+
+            if (existingItem) {
+              // Product already exists in backend - UPDATE quantity (not increment)
+              // Calculate the difference between local and backend quantities
+              const qtyDiff = localItem.quantity - existingItem.quantity;
+
+              if (qtyDiff > 0) {
+                // Local has more - increment by difference
+                await apiClient.post("/cart/add", {
+                  userId: userId,
+                  item: {
+                    product: localItem.product._id,
+                    qty: qtyDiff,
+                  },
+                  type: "increment",
+                });
+              } else if (qtyDiff < 0) {
+                // Backend has more - decrement by difference
+                await apiClient.post("/cart/add", {
+                  userId: userId,
+                  item: {
+                    product: localItem.product._id,
+                    qty: Math.abs(qtyDiff),
+                  },
+                  type: "decrement",
+                });
+              }
+              // If qtyDiff === 0, no change needed
+            } else {
+              // Product doesn't exist in backend - add it
+              await apiClient.post("/cart/add", {
+                userId: userId,
+                item: {
+                  product: localItem.product._id,
+                  qty: localItem.quantity,
+                },
+                type: "increment",
+              });
+            }
+          }
+
+          // Clear local cart after successful sync
+          set({
+            cart: get().cart.filter((item) => !item.isLocal),
+          });
+
+          // Dispatch event to refresh cart count
+          window.dispatchEvent(new CustomEvent("cartUpdated"));
+
+          return true;
+        } catch (error) {
+          console.error("Failed to sync cart to backend:", error);
+          return false;
+        }
+      },
+
+      getTotalQuantity: () => {
         const state = get();
         return state.cart.reduce((sum, item) => sum + (item?.quantity || 0), 0);
       },
 
-      // Get total price
-      getTotalPrice: () => {
-        const state = get();
-        return state.cart.reduce(
-          (sum, item) => sum + (item?.price || 0) * (item?.quantity || 0),
-          0,
+      // Merge backend cart with local cart
+      mergeCarts: (backendCart) => {
+        const localCart = get().cart;
+
+        // Create a map for easy lookup
+        const backendMap = new Map();
+        backendCart.forEach((item) => {
+          backendMap.set(item.product._id, item);
+        });
+
+        // Filter out local items that already exist in backend
+        const uniqueLocalItems = localCart.filter(
+          (localItem) => !backendMap.has(localItem.product._id)
         );
-      },
 
-      // Check if product is in cart
-      isInCart: (productId) => {
-        const state = get();
-        return state.cart.some((item) => item.productId === productId);
-      },
+        // Combine backend items with unique local items
+        const mergedCart = [...backendCart, ...uniqueLocalItems];
 
-      // Get quantity of a specific product
-      getProductQuantity: (productId) => {
-        const state = get();
-        const item = state.cart.find((item) => item.productId === productId);
-        return item?.quantity || 0;
+        set({ cart: mergedCart });
       },
     }),
     {
-      name: "bysAgro-cart", // localStorage key
-    },
-  ),
+      name: "bysAgro-cart",
+    }
+  )
 );

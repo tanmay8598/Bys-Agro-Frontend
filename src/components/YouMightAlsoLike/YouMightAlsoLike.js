@@ -12,7 +12,7 @@ function YouMightAlsoLike({ youMayAlsoLikeProducts = [] }) {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 py-8">
+    <div className="w-full max-w-7xl mx-auto px-4 md:px-8 py-4">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl  font-serif font-semibold text-[#1D241D]">
          Frequently Bought Together

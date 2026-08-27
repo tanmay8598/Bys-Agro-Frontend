@@ -108,7 +108,7 @@ const ShopByCategory = () => {
     return (
       <section className="bg-[#F7F2EA] py-10">
         <div className="max-w-7xl mx-auto px-8">
-          <h2 className="font-serif text-3xl font-semibold text-[#1D241D] mb-8">
+          <h2 className="font-serif text-sm md:text-3xl font-semibold text-[#1D241D] mb-8">
             Shop by Category
           </h2>
           <div className="flex gap-8 overflow-hidden">
@@ -125,10 +125,10 @@ const ShopByCategory = () => {
   }
 
   return (
-    <section className="bg-[#F7F2EA] py-10">
-      <div className="max-w-7xl mx-auto px-8">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="font-serif text-3xl font-semibold text-[#1D241D]">
+    <section className="bg-[#F7F2EA] py-5">
+      <div className="max-w-7xl mx-auto px-4 md:px-8">
+        <div className="flex items-center justify-between mb-4 md:mb-8">
+          <h2 className="font-serif text-xl md:text-3xl font-semibold text-[#1D241D]">
             Shop by Category
           </h2>
           

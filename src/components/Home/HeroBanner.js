@@ -77,7 +77,7 @@ const HeroBanner = () => {
   return (
     <>
       <section className="bg-[#f4e6d2] overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-6 sm:py-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-6 sm:py-10">
           <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 lg:gap-16 items-center">
             
             {/* Right Side - Image (Shows first on mobile) */}

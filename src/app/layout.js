@@ -106,6 +106,7 @@ export default function RootLayout({ children }) {
       <body>
          <GoogleOAuthProvider
           clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+          // clientId="985394702355-u6ffiuek808sja4hdbedujlfj1ou57l3.apps.googleusercontent.com"
         >
 
         <Suspense fallback={null}>

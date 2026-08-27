@@ -115,7 +115,7 @@ export default function VerificationSidebar({
     }
     if (otpValue.length === 4) {
       const payload = {
-        [isEmailMode ? "email" : "phone"]: isEmailMode ? email : mobile,
+       phone: mobile,
         otp: otpValue,
       };
 
@@ -173,17 +173,13 @@ export default function VerificationSidebar({
   const handleResendCode = async () => {
     setResendLoader(true);
     try {
-      const url = `/user${isEmailMode ? "/resend-otp" : "/resend-mobile-otp"}`;
-
-      console.log("url payload", url,{
-        [isEmailMode ? "email" : "phone"]: isEmailMode ? email : mobile,
-      } )
-
-      const response = await apiClient.post(url, {
-        [isEmailMode ? "email" : "phone"]: isEmailMode ? email : mobile,
+    
+     
+      const response = await apiClient.post("/user/resend-mobile-otp", {
+        mobile,
       });
 
-      console.log("response", response)
+      // console.log("response", response)
 
       if (!response.ok) {
         throw new Error("Failed to resend otp");
