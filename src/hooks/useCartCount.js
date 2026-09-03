@@ -21,9 +21,9 @@ export const useCartCount = () => {
       });
 
       let count = 0;
-      if (Array.isArray(response.data.cart)) {
+      if (Array.isArray(response?.data?.cart)) {
         count = response.data.cart.length;
-      } else if (Array.isArray(response.data?.items)) {
+      } else if (Array.isArray(response?.data?.items)) {
         count = response.data.items.length;
       }
       setBackendCount(count);

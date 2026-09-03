@@ -1,36 +1,17 @@
 "use client";
-import Image from "next/image";
-import { useState, useEffect, useRef } from "react";
-import apiClient from './../../api/client';
-import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
-const ShopByCategory = () => {
+const ShopByCategory = ({ categories = [] }) => {
+
   const router = useRouter();
   const scrollContainerRef = useRef(null);
-  const [categories, setCategories] = useState([]);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
-  const [loading, setLoading] = useState(true);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
   const autoScrollRef = useRef(null);
-
-  const getAllCategories = async () => {
-    try {
-      const response = await apiClient.get("/variation/category/get");
-      if (response.ok) {
-        setCategories(response.data.categories || []);
-      }
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    getAllCategories();
-  }, []);
 
   // Auto-scroll functionality
   useEffect(() => {
@@ -104,25 +85,7 @@ const ShopByCategory = () => {
     }
   }, [categories]);
 
-  if (loading) {
-    return (
-      <section className="bg-[#F7F2EA] py-10">
-        <div className="max-w-7xl mx-auto px-8">
-          <h2 className="font-serif text-sm md:text-3xl font-semibold text-[#1D241D] mb-8">
-            Shop by Category
-          </h2>
-          <div className="flex gap-8 overflow-hidden">
-            {[1, 2, 3, 4, 5].map((_, index) => (
-              <div key={index} className="min-w-45 animate-pulse">
-                <div className="h-32 rounded-3xl bg-gray-200"></div>
-                <div className="mt-5 h-4 bg-gray-200 rounded mx-auto w-20"></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
+
 
   return (
     <section className="bg-[#F7F2EA] py-5">

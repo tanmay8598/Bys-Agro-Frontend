@@ -1,9 +1,7 @@
-
-
 "use client";
 
 import apiClient from './../../api/client';
- import useAuth from './../../auth/useAuth';
+import useAuth from './../../auth/useAuth';
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -17,11 +15,9 @@ import { IoClose, IoTrashOutline } from "react-icons/io5";
 import CompactLinkedOffers from "./../../components/Offers/CompactLinkedOffers";
 import { useCartStore } from './../../stores/cartStore';
 
-
 export default function CartSidebar({ isOpen, onClose }) {
   const router = useRouter();
   const { user } = useAuth();
-  // const { openLoginModal } = useContext(AuthContext);
   const [showBreakdown, setShowBreakdown] = useState(false);
   const {
     cart: localCart,
@@ -61,7 +57,6 @@ export default function CartSidebar({ isOpen, onClose }) {
   // Merge local and backend carts
   const cartData = user ? backendCartData : localCart;
 
-  // Add this after line ~55 (after cartData definition)
   const getLocalCartTotals = () => {
     if (!Array.isArray(localCart) || localCart.length === 0) {
       return {
@@ -106,7 +101,7 @@ export default function CartSidebar({ isOpen, onClose }) {
     if (!user) return;
 
     try {
-         setIsLoadingCart(true);
+      setIsLoadingCart(true);
       const response = await apiClient.get("/cart/get", {
         userId: user?.id,
       });
@@ -124,9 +119,9 @@ export default function CartSidebar({ isOpen, onClose }) {
     } catch (error) {
       console.error("Error fetching cart:", error);
       setBackendCartData([]);
-    }finally {
-    setIsLoadingCart(false);
-  }
+    } finally {
+      setIsLoadingCart(false);
+    }
   };
 
   const checkLinkedOffersForCart = async () => {
@@ -167,7 +162,6 @@ export default function CartSidebar({ isOpen, onClose }) {
     }
   };
 
-  // applyLinkedDiscountsToCart function
   const applyLinkedDiscountsToCart = async () => {
     try {
       const response = await apiClient.post("/cart/apply-linked-discounts", {
@@ -189,12 +183,10 @@ export default function CartSidebar({ isOpen, onClose }) {
 
   const getDeliveryPrices = async () => {
     try {
-      // Fetch PREPAID delivery settings
       const prepaidResponse = await apiClient.get("/delivery-fee/get", {
         paymentMethod: "PREPAID",
       });
       
-      // Fetch COD delivery settings
       const codResponse = await apiClient.get("/delivery-fee/get", {
         paymentMethod: "COD",
       });
@@ -212,7 +204,6 @@ export default function CartSidebar({ isOpen, onClose }) {
         setCodDeliveryPrices(codData);
       }
 
-      // Priority: PREPAID extraDiscount > COD extraDiscount > Nothing
       if (prepaidData && prepaidData.extraDiscount > 0) {
         setDeliveryPrices(prepaidData);
         setExtraDiscount(prepaidData.extraDiscount || 0);
@@ -271,7 +262,6 @@ export default function CartSidebar({ isOpen, onClose }) {
     }
   };
 
-  // QUANTITY CHANGE - SAME LOGIC AS CartContent
   const handleQuantityChange = async (
     cartItem,
     newQuantity,
@@ -279,12 +269,10 @@ export default function CartSidebar({ isOpen, onClose }) {
   ) => {
     if (newQuantity < 1) return;
 
-    // Calculate current total cart quantity
     const currentTotalQuantity = getTotalCartQuantity();
     const quantityDifference = newQuantity - currentQuantity;
     const newTotalQuantity = currentTotalQuantity + quantityDifference;
 
-    // GLOBAL CART LIMIT CHECK (max 4 total items)
     if (newQuantity > currentQuantity && newTotalQuantity > 4) {
       toast.error(
         "Maximum 4 items allowed per order. Please remove some items before adding more.",
@@ -361,10 +349,8 @@ export default function CartSidebar({ isOpen, onClose }) {
     if (!user) {
       onClose();
       localStorage.setItem("redirectToCheckout", "true");
-      // openLoginModal();
       return;
     }
-
 
     router.push("/checkout");
     onClose();
@@ -380,8 +366,6 @@ export default function CartSidebar({ isOpen, onClose }) {
     }
   }, [user, cartData]);
 
-
-  // Sync cart when user logs in
   useEffect(() => {
     if (user && localCart.length > 0) {
       const syncCart = async () => {
@@ -397,9 +381,9 @@ export default function CartSidebar({ isOpen, onClose }) {
   useEffect(() => {
     if (user) {
       getCartCount();
-    }else {
-    setIsLoadingCart(false);
-  }
+    } else {
+      setIsLoadingCart(false);
+    }
   }, [user]);
 
   useEffect(() => {
@@ -418,12 +402,10 @@ export default function CartSidebar({ isOpen, onClose }) {
     }
   }, [isOpen, user]);
 
-  // CONFETTI
   useEffect(() => {
     if (isOpen && cartData?.length > 0) {
       import("canvas-confetti").then((confetti) => {
-
-  confetti.default({
+        confetti.default({
           particleCount: 60,
           spread: 70,
           origin: { x: 0.8, y: 0.2 },
@@ -439,7 +421,6 @@ export default function CartSidebar({ isOpen, onClose }) {
   }, [backendTotals.grandTotal, deliveryPrices]);
 
   useEffect(() => {
-    // Listen for custom event to open cart
     const openCartFromEvent = () => {
       window.dispatchEvent(new CustomEvent("triggerCartOpen"));
     };
@@ -451,45 +432,42 @@ export default function CartSidebar({ isOpen, onClose }) {
     };
   }, []);
 
-    // After cartData definition
-if (isLoadingCart) {
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
-          <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed lg:rounded-tl-4xl lg:rounded-bl-4xl right-0 top-0 h-full w-full sm:w-lg md:w-sm bg-[#FAFAF6] z-50 flex flex-col font-figtree shadow-2xl"
-          >
-            <div className="flex justify-between items-center rounded-tl-4xl p-5 bg-white border-b border-amber-100">
-              <div>
-                <h2 className="font-bold text-xl text-gray-800">Your Cart</h2>
+  if (isLoadingCart) {
+    return (
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed lg:rounded-tl-4xl lg:rounded-bl-4xl right-0 top-0 h-full w-full sm:w-lg md:w-sm bg-[#FAFAF6] z-50 flex flex-col font-figtree shadow-2xl"
+            >
+              <div className="flex justify-between items-center rounded-tl-4xl p-5 bg-white border-b border-amber-100">
+                <div>
+                  <h2 className="font-bold text-xl text-gray-800">Your Cart</h2>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+                >
+                  <IoClose className="text-xl cursor-pointer text-gray-600" />
+                </button>
               </div>
-              <button
-                onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-              >
-                <IoClose className="text-xl cursor-pointer text-gray-600" />
-              </button>
-            </div>
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-10 h-10 border-4 border-[#c1552c] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-[#2b1b12]">Loading cart...</p>
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-10 h-10 border-4 border-[#c1552c] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-[#2b1b12]">Loading cart...</p>
+                </div>
               </div>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-}
-
-  
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    );
+  }
 
   if (cartData?.length === 0) {
     return (
@@ -576,8 +554,6 @@ if (isLoadingCart) {
     );
   }
 
-
-
   return (
     <AnimatePresence>
       {isOpen && (
@@ -608,29 +584,29 @@ if (isLoadingCart) {
 
             {showLinkedOffers && selectedParentForOffers && (
               <div className="sticky top-0 z-10 bg-linear-to-r from-primary-50 to-amber-50 border-b border-primary-200 shadow-sm">
-               <div
-  onClick={() => setIsOffersExpanded(!isOffersExpanded)}
-  className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-[#FDF5F0] transition-colors rounded-t-lg"
->
-  <div className="flex items-center gap-2">
-    <div className="relative">
-      <GiPresent className="text-[#E56A5C] text-sm animate-bounce" />
-    </div>
-    <p className="text-xs font-semibold text-[#E56A5C]">
-      Special Add-On Offers Available!
-    </p>
-  </div>
-  <div className="flex items-center gap-2">
-    <span className="text-[10px] text-[#c1552c] font-medium">
-      Add to save more
-    </span>
-    {isOffersExpanded ? (
-      <FaChevronUp className="w-3 h-3 text-[#c1552c]" />
-    ) : (
-      <FaChevronDown className="w-3 h-3 text-[#c1552c]" />
-    )}
-  </div>
-</div>
+                <div
+                  onClick={() => setIsOffersExpanded(!isOffersExpanded)}
+                  className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-[#FDF5F0] transition-colors rounded-t-lg"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <GiPresent className="text-[#E56A5C] text-sm animate-bounce" />
+                    </div>
+                    <p className="text-xs font-semibold text-[#E56A5C]">
+                      Special Add-On Offers Available!
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-[#c1552c] font-medium">
+                      Add to save more
+                    </span>
+                    {isOffersExpanded ? (
+                      <FaChevronUp className="w-3 h-3 text-[#c1552c]" />
+                    ) : (
+                      <FaChevronDown className="w-3 h-3 text-[#c1552c]" />
+                    )}
+                  </div>
+                </div>
 
                 <AnimatePresence>
                   {isOffersExpanded && (
@@ -763,7 +739,6 @@ if (isLoadingCart) {
                     className="bg-gray-100 rounded-2xl p-2 shadow-md transition-shadow"
                   >
                     <div className="flex gap-3">
-                      {/* IMAGE SECTION */}
                       <div className="relative shrink-0">
                         <div className="w-20 h-20 rounded-xl overflow-hidden relative">
                           <Image
@@ -790,7 +765,6 @@ if (isLoadingCart) {
                         )}
                       </div>
 
-                      {/* CONTENT SECTION */}
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
@@ -803,15 +777,14 @@ if (isLoadingCart) {
 
                             {isComboDiscount && (
                               <div className="flex items-center gap-1.5 mt-1">
-                                <GiPresent className="text-primary-400 text-xs" />
-                                <span className="text-xs bg-primary-100 text-primary-400 px-2 py-0.5 rounded-full font-medium">
+                                <GiPresent className="text-xs bg-[#faf4ea] text-[#c1552c]" />
+                                <span className="text-xs bg-[#faf4ea] text-[#c1552c] px-2 py-0.5 rounded-full font-medium">
                                   Combo discount {getComboDiscountText()} OFF
                                 </span>
                               </div>
                             )}
                           </div>
 
-                          {/* PRICE SECTION */}
                           <div className="text-right">
                             {showDiscount ? (
                               <div className="flex flex-col items-end">
@@ -830,7 +803,6 @@ if (isLoadingCart) {
                           </div>
                         </div>
 
-                        {/* BOTTOM ROW - Quantity Controls */}
                         <div className="flex justify-between items-center mt-3">
                           <div className="flex items-center gap-2">
                             <button
@@ -860,9 +832,9 @@ if (isLoadingCart) {
 
                               <span className="text-sm font-medium w-6 text-center">
                                 {updatingItem === item._id ? (
-                                  <div className="w-4 h-4 border-2  border-amber-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                                  <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
                                 ) : (
-                                 <p className="text-gray-700"> {item.quantity}</p>
+                                  <p className="text-gray-700">{item.quantity}</p>
                                 )}
                               </span>
 
@@ -936,35 +908,54 @@ if (isLoadingCart) {
                     className="px-5 pb-4 text-sm text-gray-600"
                   >
                     <div className="border-t border-dashed pt-3 space-y-2">
-                      {/* Total MRP */}
-                      <div className="flex justify-between">
-                        <span>Total MRP</span>
+                      {/* Price with MRP and Discount */}
+                      <div className="flex justify-between items-center">
+                        <span>Price</span>
+                        <div className="flex items-center gap-2">
+                          {(user
+                            ? backendTotals.totalMRPDiscount
+                            : localTotals.totalMRPDiscount) > 0 && (
+                            <>
+                              <span className="font-bold text-gray-900 text-sm">
+                                ₹
+                                {Math.round(
+                                  (user ? backendTotals.grandTotal : localTotals.grandTotal)
+                                )}
+                              </span>
+                              <span className="line-through text-gray-400 text-sm">
+                                ₹
+                                {Math.round(
+                                  user ? backendTotals.totalMRP : localTotals.totalMRP
+                                )}
+                              </span>
+                            </>
+                          )}
+                          {!(user
+                            ? backendTotals.totalMRPDiscount
+                            : localTotals.totalMRPDiscount) > 0 && (
+                            <span className="font-bold text-gray-900 text-sm">
+                              ₹
+                              {Math.round(
+                                user ? backendTotals.totalMRP : localTotals.totalMRP
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Delivery Fee */}
+                      <div className="flex justify-between items-center">
+                        <span>Delivery fee</span>
                         <span>
-                          ₹
-                          {Math.round(
-                            user
-                              ? backendTotals.totalMRP
-                              : localTotals.totalMRP,
+                          {deliveryFee === 0 ? (
+                            <span className="font-regular">
+                              FREE shipping {activeDiscountType === "PREPAID" ? "(Prepaid)" : activeDiscountType === "COD" ? "(COD)" : ""}
+                            </span>
+                          ) : (
+                            `₹${deliveryFee}`
                           )}
                         </span>
                       </div>
-
-                      {/* Product Internal Discounts */}
-                      {(user
-                        ? backendTotals.totalMRPDiscount
-                        : localTotals.totalMRPDiscount) > 0 && (
-                        <div className="flex justify-between">
-                          <span>Discount on MRP</span>
-                          <span className="text-green-700">
-                            -₹
-                            {Math.round(
-                              user
-                                ? backendTotals.totalMRPDiscount
-                                : localTotals.totalMRPDiscount,
-                            )}
-                          </span>
-                        </div>
-                      )}
 
                       {/* Combo Savings */}
                       {backendTotals.totalComboDiscount > 0 && (
@@ -973,29 +964,12 @@ if (isLoadingCart) {
                             <span className="text-primary-400 font-medium">
                               Combo Savings
                             </span>
-                            <span className="text-xs text-gray-500">
-                              Additional discount on combo items
-                            </span>
                           </div>
                           <span className="text-primary-400 font-bold">
                             -₹{Math.round(backendTotals.totalComboDiscount)}
                           </span>
                         </div>
                       )}
-
-                      {/* Delivery Fee */}
-                      <div className="flex justify-between items-center">
-                        <span>Delivery fee</span>
-                        <span>
-                          {deliveryFee === 0 ? (
-                            <span className="font-semibold">
-                              FREE shipping {activeDiscountType === "PREPAID" ? "(Prepaid)" : activeDiscountType === "COD" ? "(COD)" : ""}
-                            </span>
-                          ) : (
-                            `₹${deliveryFee}`
-                          )}
-                        </span>
-                      </div>
 
                       {/* Free shipping progress */}
                       {deliveryPrices?.feeStrategy !== "FREE" &&
@@ -1019,7 +993,7 @@ if (isLoadingCart) {
                             </span>
                             <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-primary-400 rounded-full transition-all duration-300"
+                                className="h-full bg-[#c1552c] rounded-full transition-all duration-300"
                                 style={{
                                   width: `${Math.min(100, (backendTotals.grandTotal / (deliveryPrices?.freeThreshold || 500)) * 100)}%`,
                                 }}
@@ -1028,27 +1002,32 @@ if (isLoadingCart) {
                           </div>
                         )}
 
-                      {/* Extra Discount */}
+                      {/* Extra Discount - Prepaid */}
                       {extraDiscount > 0 && activeDiscountType === "PREPAID" && (
-                        <div className="flex justify-between items-center bg-primary-50 p-2 rounded-lg -mx-2 px-2">
+                        <div className="flex justify-between items-center text-green-600 bg-green-50 p-2 rounded-lg -mx-2 px-2">
                           <div className="flex flex-col">
-                            <span className="text-primary-400 font-medium">Prepaid Discount</span>
-                            <span className="text-xs text-gray-500">Prepaid discount applied</span>
+                            <span className="text-green-700 font-medium">Online Payment Discount</span>
                           </div>
-                          <span className="text-primary-400 font-bold">-{extraDiscount}%</span>
+                          <span className="text-green-700 font-bold">
+                            -₹{Math.round(((user ? backendTotals.grandTotal : localTotals.grandTotal) * extraDiscount) / 100)}
+                          </span>
                         </div>
                       )}
 
+                      {/* Extra Discount - COD */}
                       {extraDiscount > 0 && activeDiscountType === "COD" && (
                         <div className="flex justify-between items-center bg-primary-50 p-2 rounded-lg -mx-2 px-2">
                           <div className="flex flex-col">
                             <span className="text-primary-400 font-medium">Special Discount</span>
                             <span className="text-xs text-gray-500">Special discount applied</span>
                           </div>
-                          <span className="text-primary-400 font-bold">-{extraDiscount}%</span>
+                          <span className="text-primary-400 font-bold">
+                            -₹{Math.round(((user ? backendTotals.grandTotal : localTotals.grandTotal) * extraDiscount) / 100)}
+                          </span>
                         </div>
                       )}
 
+                      {/* COD Handling Charge */}
                       {codHandlingCharge > 0 && activeDiscountType === "COD" && (
                         <div className="flex justify-between items-center">
                           <span>COD Handling Charge</span>

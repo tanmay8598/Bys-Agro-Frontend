@@ -222,13 +222,28 @@ export default function CheckoutContent() {
     if (user) {
       applyLinkedDiscountsToCart();
     }
-  }, [user]);
+  }, [user, cartItems]);
 
   useEffect(() => {
     const cartTotal = backendTotals.grandTotal;
     const fee = calculateDeliveryFee(cartTotal);
     setDeliveryFee(fee);
   }, [backendTotals.grandTotal, deliveryPrices]);
+
+  useEffect(() => {
+  const handleCartUpdate = () => {
+    if (user) {
+      fetchCartData();
+      applyLinkedDiscountsToCart();
+    }
+  };
+
+  window.addEventListener("cartUpdated", handleCartUpdate);
+
+  return () => {
+    window.removeEventListener("cartUpdated", handleCartUpdate);
+  };
+}, [user]);
 
   const getDeliveryPrices = async () => {
     try {
@@ -368,16 +383,17 @@ export default function CheckoutContent() {
     }
   };
 
-  const updateUserDetails = async () => {
-    if (!user) return;
+const updateUserDetails = async () => {
+  if (!user) return false; // Return false if no user
 
-    if (!validateForm()) {
-      toast.error("Please fill all required fields correctly");
-      return;
-    }
+  if (!validateForm()) {
+    toast.error("Please fill all required fields correctly");
+    return false;
+  }
 
-    setAddressSaving(true);
+  setAddressSaving(true);
 
+  try {
     const response = await apiClient.post("/user/update", {
       userId: user?.id,
       firstName: formData.firstName,
@@ -388,15 +404,15 @@ export default function CheckoutContent() {
         area: formData.area,
         state: formData.state,
         city: formData.city,
-        landmark: formData.landmark,
+        landmark: formData.landmark || "",
         mobile: formData.phone,
+        email: formData.email,
         pincode: formData.zipCode,
       },
     });
 
     if (response.ok) {
       const u = response.data.user;
-
       setFormData((prev) => ({
         ...prev,
         email: u.email || prev.email,
@@ -412,73 +428,180 @@ export default function CheckoutContent() {
       }));
 
       toast.success(response?.data?.message || "Address Updated!");
+      return true; // Return true on success
+    } else {
+      toast.error("Failed to save address");
+      return false; // Return false on failure
     }
+  } catch (error) {
+    console.error("Error updating user:", error);
+    toast.error("Error saving address");
+    return false; // Return false on error
+  } finally {
     setAddressSaving(false);
-  };
+  }
+};
 
-  const fetchCartData = async () => {
-    if (!user) return;
+  // const fetchCartData = async () => {
+  //   if (!user) return;
 
-    try {
-      const response = await apiClient.get("/cart/get", {
-        userId: user?.id,
+  //   try {
+  //     const response = await apiClient.get("/cart/get", {
+  //       userId: user?.id,
+  //     });
+
+  //     let items = [];
+  //     if (response.data) {
+  //       if (Array.isArray(response.data.cart)) items = response.data.cart;
+  //       else if (Array.isArray(response.data.items))
+  //         items = response.data.items;
+  //       else if (response.data.cart) items = response.data.cart;
+  //     }
+
+  //     if (items.length === 0) {
+  //       toast.error("Your cart is empty");
+  //       router.push("/");
+  //       return;
+  //     }
+
+  //     const calculatedSubtotal = items.reduce((sum, item) => {
+  //       const originalPrice = item?.product?.price || 0;
+  //       const quantity = item?.quantity || 0;
+  //       const discount = item?.product?.discount || 0;
+  //       const isFlash = item?.product?.isFlash && item?.product?.flash;
+
+  //       let finalPrice = originalPrice;
+
+  //       if (isFlash) {
+  //         const flash = item.product.flash;
+  //         if (flash.discountType === "PERCENT") {
+  //           finalPrice = finalPrice - (finalPrice * flash.discountValue) / 100;
+  //         } else if (flash.discountType === "FIXED") {
+  //           finalPrice = finalPrice - flash.discountValue;
+  //         }
+  //       }
+  //       else if (discount > 0) {
+  //         finalPrice = finalPrice - (finalPrice * discount) / 100;
+  //       }
+
+  //       finalPrice = Math.max(finalPrice, 0);
+  //       return sum + Math.round(finalPrice) * quantity;
+  //     }, 0);
+
+  //     const originalSubtotal = items.reduce(
+  //       (sum, item) =>
+  //         sum + (item?.product?.price || 0) * (item?.quantity || 0),
+  //       0,
+  //     );
+
+  //     const calculatedShipping = calculatedSubtotal > 500 ? 0 : 50;
+
+  //     setCartItems(items);
+  //     setSubtotal(calculatedSubtotal);
+  //     setOriginalSubtotal(originalSubtotal);
+  //     setShipping(calculatedShipping);
+  //   } catch (error) {
+  //     console.error("Error fetching cart:", error);
+  //     toast.error("Failed to load cart information");
+  //   }
+  // };
+
+  // Add this helper function after extractWeightInGrams (around line 280)
+const deduplicateCartItems = (items) => {
+  const uniqueMap = new Map();
+  
+  items.forEach(item => {
+    // Get the product ID - handle both cart item and direct product
+    const productId = item.product?._id || item._id;
+    if (!productId) return;
+    
+    if (uniqueMap.has(productId)) {
+      const existing = uniqueMap.get(productId);
+      // Merge quantities - keep the higher or add them
+      const mergedQty = Math.max(existing.quantity || 0, item.quantity || 0);
+      uniqueMap.set(productId, {
+        ...existing,
+        ...item,
+        quantity: mergedQty,
+        // Keep the most complete product data
+        product: existing.product || item.product
       });
-
-      let items = [];
-      if (response.data) {
-        if (Array.isArray(response.data.cart)) items = response.data.cart;
-        else if (Array.isArray(response.data.items))
-          items = response.data.items;
-        else if (response.data.cart) items = response.data.cart;
-      }
-
-      if (items.length === 0) {
-        toast.error("Your cart is empty");
-        router.push("/");
-        return;
-      }
-
-      const calculatedSubtotal = items.reduce((sum, item) => {
-        const originalPrice = item?.product?.price || 0;
-        const quantity = item?.quantity || 0;
-        const discount = item?.product?.discount || 0;
-        const isFlash = item?.product?.isFlash && item?.product?.flash;
-
-        let finalPrice = originalPrice;
-
-        if (isFlash) {
-          const flash = item.product.flash;
-          if (flash.discountType === "PERCENT") {
-            finalPrice = finalPrice - (finalPrice * flash.discountValue) / 100;
-          } else if (flash.discountType === "FIXED") {
-            finalPrice = finalPrice - flash.discountValue;
-          }
-        }
-        else if (discount > 0) {
-          finalPrice = finalPrice - (finalPrice * discount) / 100;
-        }
-
-        finalPrice = Math.max(finalPrice, 0);
-        return sum + Math.round(finalPrice) * quantity;
-      }, 0);
-
-      const originalSubtotal = items.reduce(
-        (sum, item) =>
-          sum + (item?.product?.price || 0) * (item?.quantity || 0),
-        0,
-      );
-
-      const calculatedShipping = calculatedSubtotal > 500 ? 0 : 50;
-
-      setCartItems(items);
-      setSubtotal(calculatedSubtotal);
-      setOriginalSubtotal(originalSubtotal);
-      setShipping(calculatedShipping);
-    } catch (error) {
-      console.error("Error fetching cart:", error);
-      toast.error("Failed to load cart information");
+    } else {
+      uniqueMap.set(productId, item);
     }
-  };
+  });
+  
+  return Array.from(uniqueMap.values());
+};
+
+// Replace your existing fetchCartData with this:
+const fetchCartData = async () => {
+  if (!user) return;
+
+  try {
+    const response = await apiClient.get("/cart/get", {
+      userId: user?.id,
+    });
+
+    let items = [];
+    if (response.data) {
+      if (Array.isArray(response.data.cart)) items = response.data.cart;
+      else if (Array.isArray(response.data.items)) items = response.data.items;
+      else if (response.data.cart) items = response.data.cart;
+    }
+
+    if (items.length === 0) {
+      toast.error("Your cart is empty");
+      router.push("/");
+      return;
+    }
+
+    // ✅ DEDUPLICATE ITEMS
+    const deduplicatedItems = deduplicateCartItems(items);
+
+    // Calculate subtotal with discounts
+    const calculatedSubtotal = deduplicatedItems.reduce((sum, item) => {
+      const originalPrice = item?.product?.price || 0;
+      const quantity = item?.quantity || 0;
+      const discount = item?.product?.discount || 0;
+      const isFlash = item?.product?.isFlash && item?.product?.flash;
+
+      let finalPrice = originalPrice;
+
+      if (isFlash) {
+        const flash = item.product.flash;
+        if (flash.discountType === "PERCENT") {
+          finalPrice = finalPrice - (finalPrice * flash.discountValue) / 100;
+        } else if (flash.discountType === "FIXED") {
+          finalPrice = finalPrice - flash.discountValue;
+        }
+      } else if (discount > 0) {
+        finalPrice = finalPrice - (finalPrice * discount) / 100;
+      }
+
+      finalPrice = Math.max(finalPrice, 0);
+      return sum + Math.round(finalPrice) * quantity;
+    }, 0);
+
+    const originalSubtotal = deduplicatedItems.reduce(
+      (sum, item) =>
+        sum + (item?.product?.price || 0) * (item?.quantity || 0),
+      0,
+    );
+
+    const calculatedShipping = calculatedSubtotal > 500 ? 0 : 50;
+
+    // ✅ Use deduplicated items
+    setCartItems(deduplicatedItems);
+    setSubtotal(calculatedSubtotal);
+    setOriginalSubtotal(originalSubtotal);
+    setShipping(calculatedShipping);
+    
+  } catch (error) {
+    console.error("Error fetching cart:", error);
+    toast.error("Failed to load cart information");
+  }
+};
 
   const handleNoShippingOptions = () => {
     let calculatedShipping = subtotal > 500 ? 0 : 50;
@@ -816,6 +939,9 @@ export default function CheckoutContent() {
       return;
     }
 
+      const addressSaved = await updateUserDetails();
+  if (!addressSaved) return; 
+
     if (!shippingCharges?.cost && shippingCharges?.cost !== 0) {
       toast.error("Please wait for shipping calculation to complete");
       return;
@@ -1053,30 +1179,19 @@ export default function CheckoutContent() {
         ))}
       </div>
 
-      <motion.header
-        initial={{ y: -50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="relative bg-white/80 backdrop-blur-md border-b border-[#e6ded2] shadow-sm"
-      >
-        <div className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 py-2">
-          <div className="flex items-center md:text-left gap-2 md:gap-0 flex-col md:flex-row justify-between">
-            <div>
-              <h1 className="text-xl md:text-3xl text-center font-bold text-[#2b1b12]">
-                Checkout
-              </h1>
-            </div>
-          </div>
-        </div>
-      </motion.header>
+   
 
       <div className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 py-2 lg:py-4">
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
-            <div className="lg:col-span-2 space-y-3">
+            {/* <div className="lg:col-span-2 space-y-3"> */}
+               <div className="lg:col-span-2">
+        <div className="lg:sticky lg:top-20 space-y-3">
+
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg border border-[#e6ded2] p-8"
+                className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg border border-[#e6ded2] p-2 md:p-4"
               >
                 <div className="flex items-center mb-4">
                   <div className="w-10 h-10 bg-[#faf4ea] rounded-2xl flex items-center justify-center mr-4">
@@ -1087,7 +1202,7 @@ export default function CheckoutContent() {
                   </h2>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
                   <FloatingLabelInput
                     label="Email address"
                     name="email"
@@ -1133,11 +1248,13 @@ export default function CheckoutContent() {
                 </div>
               </motion.div>
 
+          
+
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg border border-[#e6ded2] p-8"
+                className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg border border-[#e6ded2] p-2 md:p-4"
               >
                 <div className="flex items-center mb-6">
                   <div className="w-10 h-10 bg-[#faf4ea] rounded-2xl flex items-center justify-center mr-4">
@@ -1148,7 +1265,7 @@ export default function CheckoutContent() {
                   </h2>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
                   <FloatingLabelInput
                     label="First name"
                     name="firstName"
@@ -1176,15 +1293,26 @@ export default function CheckoutContent() {
                       required
                     />
                   </div>
-                  <div className="md:col-span-2">
+                     <div className="relative">
                     <FloatingLabelInput
-                      label="Landmark (nearby place, optional)"
-                      name="landmark"
-                      value={formData.landmark}
-                      onChange={handleInputChange}
-                      error={errors.landmark}
+                      label="ZIP code"
+                      name="zipCode"
+                      type="text"
+                      value={formData.zipCode}
+                      onChange={handleZipCodeChange}
+                      error={errors.zipCode}
+                      maxLength={6}
+                      inputMode="numeric"
+                      required
                     />
+                    {isFetchingPincode && (
+                      <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                        <div className="w-5 h-5 border-2 border-[#c1552c] border-t-transparent rounded-full animate-spin"></div>
+                      </div>
+                    )}
+                   
                   </div>
+              
 
                   <FloatingLabelInput
                     label="City"
@@ -1203,34 +1331,20 @@ export default function CheckoutContent() {
                     required
                   />
 
-                  <div className="relative">
+                      <div className="md:col-span-2">
                     <FloatingLabelInput
-                      label="ZIP code"
-                      name="zipCode"
-                      type="text"
-                      value={formData.zipCode}
-                      onChange={handleZipCodeChange}
-                      error={errors.zipCode}
-                      maxLength={6}
-                      inputMode="numeric"
-                      required
+                      label="Landmark (nearby place, optional)"
+                      name="landmark"
+                      value={formData.landmark}
+                      onChange={handleInputChange}
+                      error={errors.landmark}
                     />
-                    {isFetchingPincode && (
-                      <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                        <div className="w-5 h-5 border-2 border-[#c1552c] border-t-transparent rounded-full animate-spin"></div>
-                      </div>
-                    )}
-                    {formData.zipCode.length === 6 &&
-                      !isFetchingPincode &&
-                      !errors.zipCode && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          Enter 6 digits to auto-fill city & state
-                        </p>
-                      )}
                   </div>
+
+               
                 </div>
 
-                <div className="mt-8 pt-6 border-t border-[#e6ded2]">
+                {/* <div className="mt-8 pt-6 border-t border-[#e6ded2]">
                   <motion.button
                     type="button"
                     onClick={() => updateUserDetails()}
@@ -1245,18 +1359,20 @@ export default function CheckoutContent() {
                   <p className="text-sm text-gray-500 mt-2">
                     Save this address for future orders
                   </p>
-                </div>
+                </div> */}
               </motion.div>
             </div>
+                </div>
 
             <div className="lg:col-span-1">
+                <div className="sticky top-8">
               <motion.div
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
                 className="sticky top-8"
               >
-                <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-8">
+                <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-4">
                   <h3 className="text-lg md:text-2xl font-semibold text-[#2b1b12] mb-6 text-center">
                     Order Summary
                   </h3>
@@ -1585,7 +1701,7 @@ export default function CheckoutContent() {
                   </div>
 
                   <div className="space-y-3 mb-2 font-figtree">
-                    <div className="flex justify-between text-gray-800 text-sm font-medium">
+                    {/* <div className="flex justify-between text-gray-800 text-sm font-medium">
                       <span>Original Price</span>
                       <span className="font-semibold text-gray-800">
                         ₹{Math.round(backendTotals.totalMRP).toFixed(0)}
@@ -1619,7 +1735,36 @@ export default function CheckoutContent() {
                             </span>
                           </div>
                         );
-                      })()}
+                      })()} */}
+
+                       <div className="flex justify-between items-center text-gray-800 text-sm font-medium">
+    <span>Price</span>
+    <div className="flex items-center gap-2">
+      {(user
+        ? backendTotals.totalMRPDiscount
+        : localTotals.totalMRPDiscount) > 0 ? (
+        <>
+          <span className="font-bold text-gray-900 text-sm">
+            ₹{Math.round(
+              user ? backendTotals.grandTotal : localTotals.grandTotal
+            )}
+          </span>
+          <span className="line-through text-gray-400 text-sm">
+            ₹{Math.round(
+              user ? backendTotals.totalMRP : localTotals.totalMRP
+            )}
+          </span>
+        </>
+      ) : (
+        <span className="font-bold text-gray-900 text-sm">
+          ₹{Math.round(
+            user ? backendTotals.totalMRP : localTotals.totalMRP
+          )}
+        </span>
+      )}
+    </div>
+  </div>
+
 
                     <div className="flex justify-between text-sm text-gray-600">
                       <div>
@@ -1632,9 +1777,9 @@ export default function CheckoutContent() {
                           <p
                             className={`text-xs mt-1 ${deliveryFee === 0 ? "text-green-600" : "text-gray-500"}`}
                           >
-                            {deliveryFee === 0
+                            {/* {deliveryFee === 0
                               ? "FREE delivery on this order!"
-                              : `₹${deliveryFee} delivery fee applies`}
+                              : `₹${deliveryFee} delivery fee applies`} */}
                           </p>
                         )}
                       </div>
@@ -1649,7 +1794,7 @@ export default function CheckoutContent() {
                       </div>
                     </div>
 
-                    {deliveryPrices?.feeStrategy === "CONDITIONAL" &&
+                    {/* {deliveryPrices?.feeStrategy === "CONDITIONAL" &&
                       deliveryFee > 0 &&
                       deliveryPrices?.freeThreshold > 0 && (
                         <div className="flex justify-between items-center bg-[#faf4ea] p-2 rounded-lg mt-1">
@@ -1674,7 +1819,35 @@ export default function CheckoutContent() {
                             />
                           </div>
                         </div>
-                      )}
+                      )} */}
+
+                      {deliveryPrices?.feeStrategy === "CONDITIONAL" &&
+  deliveryFee > 0 &&
+  deliveryPrices?.freeThreshold > 0 &&
+  Math.max(0, (deliveryPrices?.freeThreshold || 500) - (user ? backendTotals.grandTotal : localTotals.grandTotal)) > 0 && (
+    <div className="flex justify-between items-center bg-[#faf4ea] p-2 rounded-lg mt-1">
+      <span className="text-xs text-[#c1552c]">
+        Add ₹
+        {Math.max(
+          0,
+          (deliveryPrices?.freeThreshold || 500) - (user ? backendTotals.grandTotal : localTotals.grandTotal),
+        ).toFixed(0)}{" "}
+        more to get
+        <span className="font-semibold">
+          {" "}
+          FREE delivery
+        </span>
+      </span>
+      <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-[#c1552c] rounded-full transition-all duration-300"
+          style={{
+            width: `${Math.min(100, ((user ? backendTotals.grandTotal : localTotals.grandTotal) / (deliveryPrices?.freeThreshold || 500)) * 100)}%`,
+          }}
+        />
+      </div>
+    </div>
+  )}
 
                     {backendTotals.totalComboDiscount > 0 && (
                       <div className="flex justify-between items-center bg-[#faf4ea] p-2 rounded-lg -mx-2 px-2">
@@ -1682,9 +1855,12 @@ export default function CheckoutContent() {
                           <span className="text-[#c1552c] font-medium text-sm">
                             Combo Savings
                           </span>
+                          {/*
                           <span className="text-xs text-gray-500">
                             Additional discount on combo items
                           </span>
+
+                          */}
                         </div>
                         <span className="text-[#c1552c] font-bold text-sm">
                           -₹{Math.round(backendTotals.totalComboDiscount)}
@@ -1698,9 +1874,9 @@ export default function CheckoutContent() {
                           <span className="text-amber-700 font-medium">
                             COD Handling Charge
                           </span>
-                          <span className="text-xs text-amber-600">
+                          {/* <span className="text-xs text-amber-600">
                             Extra charge for cash on delivery
-                          </span>
+                          </span> */}
                         </div>
                         <span className="text-amber-700 font-bold">
                           +₹{codHandlingCharge}
@@ -1708,21 +1884,18 @@ export default function CheckoutContent() {
                       </div>
                     )}
 
-                    {extraDiscount > 0 && (
-                      <div className="flex text-sm justify-between text-green-600 bg-green-50 p-2 rounded-lg -mx-2 px-2">
-                        <div className="flex flex-col">
-                          <span className="text-green-700 font-medium">
-                            {paymentMethod === "online payments" ? "Prepaid Discount" : "Special Discount"}
-                          </span>
-                          <span className="text-xs text-green-600">
-                            {paymentMethod === "online payments" ? "Prepaid discount applied" : "Special discount applied"}
-                          </span>
-                        </div>
-                        <span className="text-green-700 font-bold">
-                          -{extraDiscount}%
-                        </span>
-                      </div>
-                    )}
+                  {extraDiscount > 0 && (
+  <div className="flex text-sm justify-between text-green-600 bg-green-50 p-2 rounded-lg -mx-2 px-2">
+    <div className="flex flex-col">
+      <span className="text-green-700 font-medium">
+        {paymentMethod === "online payments" ? "Online Payment Discount" : "Special Discount"}
+      </span>
+    </div>
+    <span className="text-green-700 font-bold">
+      -₹{Math.round((user ? backendTotals.grandTotal : localTotals.grandTotal) * extraDiscount / 100)}
+    </span>
+  </div>
+)}
 
                     {discount > 0 && (
                       <div className="flex text-sm justify-between text-green-600 bg-green-50 p-2 rounded-lg -mx-2 px-2">
@@ -1742,14 +1915,14 @@ export default function CheckoutContent() {
                       </div>
                     )}
 
-                    <div className="flex justify-between border-t border-gray-200 pt-4 mt-2">
+                    {/* <div className="flex justify-between border-t border-gray-200 pt-4 mt-2">
                       <span className="text-sm font-medium text-gray-700">
                         Discounted Subtotal
                       </span>
                       <span className="text-sm font-bold text-[#c1552c]">
                         ₹{Math.round(backendTotals.grandTotal).toFixed(0)}
                       </span>
-                    </div>
+                    </div> */}
 
                     <div className="border-t border-[#e6ded2] pt-4">
                       <div className="flex justify-between text-xl font-bold text-gray-800">
@@ -1908,13 +2081,15 @@ export default function CheckoutContent() {
                   </motion.button>
 
                   <div className="mt-2 pt-2 border-t border-[#e6ded2]">
-                    <p className="text-center text-gray-600 font-semibold">
-                      Secure & Encrypted
+                    <p className="text-center text-sm text-gray-600 ">
+                    Your Personal Information Is Securely Protected
                     </p>
                   </div>
                 </div>
               </motion.div>
             </div>
+            </div>
+
           </div>
         </form>
       </div>

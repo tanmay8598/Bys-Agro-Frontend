@@ -1,17 +1,111 @@
+import { Suspense } from "react";
+
 import HeroBanner from "./../components/Home/HeroBanner";
 import FeatureStrip from "./../components/Home/FeatureStrip";
 import ShopByCategory from "./../components/Home/ShopByCategory";
 import Bestsellers from "./../components/Home/Bestsellers";
-import ResponsiveBanner from './../components/Home/ResponsiveBanner';
-import WhyChooseUs from './../components/Home/WhyChooseUs';
-import Testimonials from './../components/Home/Testimonials';
-export default function Home() {
+import ResponsiveBanner from "./../components/Home/ResponsiveBanner";
+import WhyChooseUs from "./../components/Home/WhyChooseUs";
+import Testimonials from "./../components/Home/Testimonials";
+
+const SERVER = process.env.NEXT_PUBLIC_SERVER;
+
+const REVALIDATE = {
+  next: {
+    revalidate: 300,
+  },
+};
+
+async function getCategories() {
+  try {
+    const res = await fetch(
+      `${SERVER}/variation/category/get`,
+      REVALIDATE
+    );
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch categories");
+    }
+
+    const data = await res.json();
+
+    return data.categories || [];
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    return [];
+  }
+}
+
+async function getBestsellers() {
+  try {
+    const res = await fetch(
+      `${SERVER}/product/get-products`,
+      REVALIDATE
+    );
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch products");
+    }
+
+    const data = await res.json();
+
+    return data.products || [];
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    return [];
+  }
+}
+
+async function getTestimonials() {
+  try {
+    const res = await fetch(
+      `${SERVER}/testimonial/get-active-testimonials`,
+      REVALIDATE
+    );
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch testimonials");
+    }
+
+    const data = await res.json();
+
+    return data.testimonials || [];
+  } catch (error) {
+    console.error("Error fetching testimonials:", error);
+    return [];
+  }
+}
+
+async function ShopByCategorySection() {
+  const categories = await getCategories();
+
+  return <ShopByCategory categories={categories} />;
+}
+
+async function BestsellersSection() {
+  const products = await getBestsellers();
+
+  return <Bestsellers products={products} />;
+}
+
+async function TestimonialsSection() {
+  const testimonials = await getTestimonials();
+
+  return <Testimonials testimonials={testimonials} />;
+}
+
+export default async function Home() {
   return (
     <>
       <HeroBanner />
+
       <FeatureStrip />
-      <ShopByCategory />
-       <ResponsiveBanner
+
+      <Suspense fallback={null}>
+        <ShopByCategorySection />
+      </Suspense>
+
+      <ResponsiveBanner
         desktopImg="/bannerImages/homeImage.jpg"
         mobileImg="/bannerImages/homeImageMobile.webp"
         desktopAlt="Premium Quality Products"
@@ -23,10 +117,16 @@ export default function Home() {
         desktopHeight={400}
         mobileHeight={420}
       />
-      <Bestsellers />
-      <Testimonials />
-    <WhyChooseUs />
 
+      <Suspense fallback={null}>
+        <BestsellersSection />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <TestimonialsSection />
+      </Suspense>
+
+      <WhyChooseUs />
     </>
   );
 }

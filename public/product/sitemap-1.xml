@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <url>
+    <loc>http://localhost:3000/product/sugar-200</loc>
+    <lastmod>2026-08-20T10:19:28.323Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>http://localhost:3000/product/Dry-fruits-nuts</loc>
+    <lastmod>2026-08-11T10:50:51.662Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>http://localhost:3000/product/Sugar-Salts</loc>
+    <lastmod>2026-08-11T10:48:53.333Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>http://localhost:3000/product/Musturd-Oils</loc>
+    <lastmod>2026-08-11T10:46:42.780Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>http://localhost:3000/product/Spices-For-Kitchen</loc>
+    <lastmod>2026-08-11T09:57:01.489Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>http://localhost:3000/product/Masur-Dal</loc>
+    <lastmod>2026-08-11T10:47:08.319Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+</urlset>
